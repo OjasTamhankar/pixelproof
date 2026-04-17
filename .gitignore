@@ -1,0 +1,19 @@
+# Virtual environments
+ai_env/
+.venv/
+
+# Dataset (VERY IMPORTANT)
+dataset/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Notebooks (optional)
+*.ipynb
+
+# Windows junk
+desktop.ini
+
+# Model (optional)
+model.pth
