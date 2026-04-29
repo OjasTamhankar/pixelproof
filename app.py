@@ -8,6 +8,10 @@ from albumentations.pytorch import ToTensorV2
 
 app = Flask(__name__)
 
+import os
+
+port = int(os.environ.get("PORT", 10000))
+
 DEVICE = 'cpu'
 
 # ---- LOAD MODEL ----
