@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelProof | AI Image Integrity</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        canvas: "#040814",
+                        panel: "#081120",
+                        accent: "#7dd3fc",
+                        success: "#22c55e",
+                        danger: "#f87171"
+                    },
+                    fontFamily: {
+                        sans: ["Plus Jakarta Sans", "sans-serif"],
+                        display: ["Space Grotesk", "sans-serif"]
+                    },
+                    boxShadow: {
+                        glow: "0 24px 80px -28px rgba(56, 189, 248, 0.55)",
+                        soft: "0 32px 120px -28px rgba(2, 8, 23, 0.9)"
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(34, 197, 94, 0.08), transparent 26%),
+                radial-gradient(circle at 85% 12%, rgba(56, 189, 248, 0.14), transparent 24%),
+                radial-gradient(circle at 18% 88%, rgba(99, 102, 241, 0.16), transparent 20%),
+                #040814;
+        }
+
+        .grid-overlay {
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+            background-size: 46px 46px;
+            mask-image: radial-gradient(circle at center, black 42%, transparent 90%);
+        }
+
+        .glass-panel {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(8, 17, 32, 0.72));
+            backdrop-filter: blur(28px);
+        }
+
+        .card-surface {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(8, 17, 32, 0.88));
+        }
+
+        .dropzone-active {
+            transform: translateY(-2px) scale(1.01);
+            border-color: rgba(125, 211, 252, 0.9);
+            background: rgba(14, 165, 233, 0.12);
+            box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.22), 0 24px 64px -28px rgba(14, 165, 233, 0.65);
+        }
+
+        .progress-stripes {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.08) 0%,
+                rgba(255, 255, 255, 0.28) 18%,
+                rgba(255, 255, 255, 0.08) 36%
+            );
+            background-size: 220px 100%;
+            animation: progress-flow 1.15s linear infinite;
+        }
+
+        .scan-bar {
+            animation: scan 1.8s ease-in-out infinite;
+        }
+
+        .fade-in {
+            animation: fade-in 0.35s ease-out both;
+        }
+
+        .float-orb {
+            animation: float 10s ease-in-out infinite;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scan {
+            0% {
+                transform: translateY(-140%);
+                opacity: 0;
+            }
+
+            25%,
+            75% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(280%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes progress-flow {
+            from {
+                background-position: 220px 0;
+            }
+
+            to {
+                background-position: 0 0;
+            }
+        }
+
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-12px);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden text-slate-100">
+    <div class="pointer-events-none fixed inset-0">
+        <div class="grid-overlay absolute inset-0 opacity-50"></div>
+        <div class="float-orb absolute left-[10%] top-28 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl"></div>
+        <div class="float-orb absolute bottom-16 right-[10%] h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" style="animation-delay: -3s;"></div>
+    </div>
+
+    <main class="relative">
+        <section class="mx-auto flex min-h-screen max-w-7xl items-center px-4 py-10 sm:px-6 lg:px-8">
+            <div class="w-full">
+                <div class="mx-auto max-w-3xl text-center">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-200/90 shadow-glow">
+                        <span class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_18px_rgba(74,222,128,0.9)]"></span>
+                        AI Image Integrity Platform
+                    </div>
+                    <h1 class="mt-6 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                        Detect real vs synthetic imagery with a polished batch review workflow.
+                    </h1>
+                    <p class="mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                        Upload multiple images, trigger a single inference pass, and review per-image confidence with clean, analyst-friendly cards.
+                    </p>
+                </div>
+
+                <div class="mx-auto mt-8 grid max-w-5xl gap-4 sm:grid-cols-3">
+                    <div class="glass-panel rounded-2xl border border-white/10 px-5 py-4 shadow-soft">
+                        <p class="text-xs uppercase tracking-[0.24em] text-slate-400">Upload Mode</p>
+                        <p class="mt-2 text-lg font-semibold text-white">Drag, drop, or browse</p>
+                        <p class="mt-1 text-sm text-slate-400">Built for batch submission with instant previews.</p>
+                    </div>
+                    <div class="glass-panel rounded-2xl border border-white/10 px-5 py-4 shadow-soft">
+                        <p class="text-xs uppercase tracking-[0.24em] text-slate-400">Output Signal</p>
+                        <p class="mt-2 text-lg font-semibold text-white">REAL / FAKE classification</p>
+                        <p class="mt-1 text-sm text-slate-400">Confidence scoring with color-coded decision states.</p>
+                    </div>
+                    <div class="glass-panel rounded-2xl border border-white/10 px-5 py-4 shadow-soft">
+                        <p class="text-xs uppercase tracking-[0.24em] text-slate-400">Endpoint</p>
+                        <p class="mt-2 text-lg font-semibold text-white">POST <span class="text-sky-300">/predict</span></p>
+                        <p class="mt-1 text-sm text-slate-400">Compatible with Flask multipart uploads using <code class="text-slate-200">images</code>.</p>
+                    </div>
+                </div>
+
+                <div class="mx-auto mt-10 max-w-6xl overflow-hidden rounded-[32px] border border-white/10 glass-panel shadow-soft">
+                    <div class="grid lg:grid-cols-[0.95fr_1.05fr]">
+                        <div class="border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
+                            <div class="flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="text-xs uppercase tracking-[0.26em] text-slate-400">Workspace</p>
+                                    <h2 class="mt-2 text-2xl font-semibold text-white">Upload and analyze</h2>
+                                </div>
+                                <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-right">
+                                    <p class="text-[11px] uppercase tracking-[0.22em] text-slate-400">Ready</p>
+                                    <p id="selectedCount" class="mt-1 text-2xl font-bold text-white">0</p>
+                                </div>
+                            </div>
+
+                            <div id="alertBox" class="mt-6 hidden rounded-2xl border px-4 py-3 text-sm"></div>
+
+                            {% if error %}
+                            <div id="serverFlash" class="mt-6 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                                {{ error }}
+                            </div>
+                            {% endif %}
+
+                            <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data" class="mt-6 space-y-6">
+                                <input id="fileInput" type="file" name="images" accept="image/*" multiple class="hidden">
+
+                                <div
+                                    id="dropzone"
+                                    class="group relative cursor-pointer overflow-hidden rounded-[28px] border border-dashed border-white/15 bg-white/[0.04] p-6 transition-all duration-300 hover:border-sky-300/60 hover:bg-sky-400/[0.05] sm:p-8"
+                                    role="button"
+                                    tabindex="0"
+                                    aria-label="Upload images"
+                                >
+                                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.16),transparent_42%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                                    <div class="relative flex flex-col items-center justify-center text-center">
+                                        <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-400/10 shadow-glow">
+                                            <svg class="h-8 w-8 text-sky-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M12 16V5"></path>
+                                                <path d="m7 10 5-5 5 5"></path>
+                                                <path d="M20 16.6A4.4 4.4 0 0 0 18 8.3 5.4 5.4 0 0 0 7.4 7a4 4 0 0 0-.4 7.9"></path>
+                                                <path d="M8 16h8"></path>
+                                            </svg>
+                                        </div>
+                                        <h3 class="mt-5 text-xl font-semibold text-white">Drop images anywhere in this panel</h3>
+                                        <p class="mt-3 max-w-md text-sm leading-6 text-slate-300">
+                                            Or click to browse files. Supports multi-image upload for a single inference batch.
+                                        </p>
+                                        <div class="mt-5 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300">
+                                            JPG, PNG, WEBP, BMP, GIF, TIFF
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid gap-3 sm:grid-cols-3">
+                                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
+                                        <p class="text-[11px] uppercase tracking-[0.22em] text-slate-400">Queued</p>
+                                        <p id="queuedCount" class="mt-2 text-2xl font-semibold text-white">0</p>
+                                    </div>
+                                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
+                                        <p class="text-[11px] uppercase tracking-[0.22em] text-slate-400">Processed</p>
+                                        <p id="processedCount" class="mt-2 text-2xl font-semibold text-white">0</p>
+                                    </div>
+                                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
+                                        <p class="text-[11px] uppercase tracking-[0.22em] text-slate-400">Invalid</p>
+                                        <p id="invalidCount" class="mt-2 text-2xl font-semibold text-white">0</p>
+                                    </div>
+                                </div>
+
+                                <div id="progressPanel" class="hidden rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <p id="progressLabel" class="text-sm font-medium text-slate-200">Preparing upload...</p>
+                                        <span id="progressValue" class="text-sm font-semibold text-sky-200">0%</span>
+                                    </div>
+                                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                                        <div id="progressBar" class="progress-stripes h-full w-0 rounded-full bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 transition-[width] duration-300 ease-out"></div>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                                    <button
+                                        id="browseButton"
+                                        type="button"
+                                        class="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:border-sky-300/60 hover:bg-sky-400/10"
+                                    >
+                                        Select images
+                                    </button>
+                                    <button
+                                        id="clearButton"
+                                        type="button"
+                                        class="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-medium text-slate-300 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        Clear queue
+                                    </button>
+                                    <button
+                                        id="analyzeButton"
+                                        type="submit"
+                                        class="inline-flex items-center justify-center gap-3 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-200/30 disabled:text-slate-400 sm:ml-auto"
+                                        disabled
+                                    >
+                                        <svg id="buttonSpinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" class="opacity-20"></circle>
+                                            <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+                                        </svg>
+                                        <span id="analyzeButtonText">Analyze images</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="p-6 sm:p-8">
+                            <div class="flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="text-xs uppercase tracking-[0.26em] text-slate-400">Review Queue</p>
+                                    <h2 class="mt-2 text-2xl font-semibold text-white">Live image cards</h2>
+                                </div>
+                                <div class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300">
+                                    Multi-image ready
+                                </div>
+                            </div>
+
+                            <div id="emptyState" class="mt-8 rounded-[28px] border border-dashed border-white/10 bg-white/[0.03] p-10 text-center">
+                                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                                    <svg class="h-8 w-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+                                        <circle cx="8.5" cy="9" r="1.3"></circle>
+                                        <path d="m21 15-4.2-4.2a1.8 1.8 0 0 0-2.6 0L7 18"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="mt-5 text-lg font-semibold text-white">No images in queue</h3>
+                                <p class="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-400">
+                                    Add one or more images to generate previews, manage the queue, and view model predictions in place.
+                                </p>
+                            </div>
+
+                            <div id="previewGrid" class="mt-8 grid gap-4 sm:grid-cols-2 2xl:grid-cols-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if results %}
+                <section id="serverResultsSection" class="mx-auto mt-8 max-w-6xl rounded-[28px] border border-white/10 glass-panel p-6 shadow-soft sm:p-8">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.24em] text-slate-400">Server Rendered</p>
+                            <h2 class="mt-2 text-xl font-semibold text-white">Latest results</h2>
+                        </div>
+                        <div class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300">
+                            Fallback view
+                        </div>
+                    </div>
+                    <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        {% for r in results %}
+                        <article class="card-surface overflow-hidden rounded-[26px] border border-white/10 p-4">
+                            <div class="flex aspect-[4/3] items-center justify-center rounded-2xl bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.18),transparent_45%),linear-gradient(180deg,rgba(15,23,42,0.92),rgba(2,6,23,0.96))]">
+                                <div class="text-center">
+                                    <p class="text-xs uppercase tracking-[0.26em] text-slate-400">Preview unavailable</p>
+                                    <p class="mt-2 text-sm font-medium text-slate-200">{{ r.filename or r.path }}</p>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <p class="truncate text-sm font-semibold text-white">{{ r.filename or r.path }}</p>
+                                {% if r.error %}
+                                <div class="mt-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-3 py-3 text-sm text-rose-100">
+                                    {{ r.error }}
+                                </div>
+                                {% else %}
+                                <div class="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3">
+                                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {% if r.prediction == 'REAL' %}bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25{% else %}bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/25{% endif %}">
+                                        {{ r.prediction }}
+                                    </span>
+                                    <span class="text-sm font-semibold text-white">{{ "%.2f"|format(r.confidence) }}%</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const ACCEPTED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "bmp", "gif", "tif", "tiff"]);
+            const RESULT_META = {
+                REAL: {
+                    badge: "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25",
+                    bar: "from-emerald-400 via-green-400 to-lime-300",
+                    tone: "text-emerald-200"
+                },
+                FAKE: {
+                    badge: "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/25",
+                    bar: "from-rose-400 via-red-400 to-orange-300",
+                    tone: "text-rose-200"
+                }
+            };
+
+            const state = {
+                files: [],
+                isProcessing: false,
+                dragDepth: 0
+            };
+
+            const elements = {
+                uploadForm: document.getElementById("uploadForm"),
+                fileInput: document.getElementById("fileInput"),
+                dropzone: document.getElementById("dropzone"),
+                browseButton: document.getElementById("browseButton"),
+                clearButton: document.getElementById("clearButton"),
+                analyzeButton: document.getElementById("analyzeButton"),
+                analyzeButtonText: document.getElementById("analyzeButtonText"),
+                buttonSpinner: document.getElementById("buttonSpinner"),
+                previewGrid: document.getElementById("previewGrid"),
+                emptyState: document.getElementById("emptyState"),
+                alertBox: document.getElementById("alertBox"),
+                queuedCount: document.getElementById("queuedCount"),
+                processedCount: document.getElementById("processedCount"),
+                invalidCount: document.getElementById("invalidCount"),
+                selectedCount: document.getElementById("selectedCount"),
+                progressPanel: document.getElementById("progressPanel"),
+                progressBar: document.getElementById("progressBar"),
+                progressLabel: document.getElementById("progressLabel"),
+                progressValue: document.getElementById("progressValue"),
+                serverFlash: document.getElementById("serverFlash"),
+                serverResultsSection: document.getElementById("serverResultsSection")
+            };
+
+            function escapeHtml(value) {
+                return String(value).replace(/[&<>"']/g, (character) => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    "\"": "&quot;",
+                    "'": "&#39;"
+                }[character]));
+            }
+
+            function formatBytes(bytes) {
+                if (!bytes) {
+                    return "0 B";
+                }
+
+                const units = ["B", "KB", "MB", "GB"];
+                const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+                const value = bytes / 1024 ** exponent;
+                return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
+            }
+
+            function isImageFile(file) {
+                if (file.type && file.type.startsWith("image/")) {
+                    return true;
+                }
+
+                const extension = file.name.split(".").pop()?.toLowerCase();
+                return ACCEPTED_EXTENSIONS.has(extension);
+            }
+
+            function setAlert(message, type = "error") {
+                const themes = {
+                    error: "border-rose-500/30 bg-rose-500/10 text-rose-100",
+                    warning: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+                    success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+                };
+
+                elements.alertBox.className = `mt-6 rounded-2xl border px-4 py-3 text-sm ${themes[type] || themes.error}`;
+                elements.alertBox.textContent = message;
+                elements.alertBox.classList.remove("hidden");
+            }
+
+            function clearAlert() {
+                elements.alertBox.classList.add("hidden");
+                elements.alertBox.textContent = "";
+            }
+
+            function hideServerFallback() {
+                if (elements.serverFlash) {
+                    elements.serverFlash.classList.add("hidden");
+                }
+
+                if (elements.serverResultsSection) {
+                    elements.serverResultsSection.classList.add("hidden");
+                }
+            }
+
+            function setProgress(percentage, label) {
+                const safePercentage = Math.max(0, Math.min(100, Math.round(percentage)));
+                elements.progressPanel.classList.remove("hidden");
+                elements.progressBar.style.width = `${safePercentage}%`;
+                elements.progressValue.textContent = `${safePercentage}%`;
+                if (label) {
+                    elements.progressLabel.textContent = label;
+                }
+            }
+
+            function hideProgress() {
+                elements.progressPanel.classList.add("hidden");
+                elements.progressBar.style.width = "0%";
+                elements.progressValue.textContent = "0%";
+                elements.progressLabel.textContent = "Preparing upload...";
+            }
+
+            function getFileKey(file) {
+                return [file.name, file.size, file.lastModified].join("::");
+            }
+
+            function syncCounters() {
+                const queued = state.files.filter((item) => item.status === "ready").length;
+                const processed = state.files.filter((item) => item.status === "done").length;
+                const invalid = state.files.filter((item) => item.status === "error").length;
+                const selected = state.files.length;
+
+                elements.queuedCount.textContent = String(queued);
+                elements.processedCount.textContent = String(processed);
+                elements.invalidCount.textContent = String(invalid);
+                elements.selectedCount.textContent = String(selected);
+                elements.analyzeButtonText.textContent = selected
+                    ? `Analyze ${selected} image${selected === 1 ? "" : "s"}`
+                    : "Analyze images";
+                elements.analyzeButton.disabled = state.isProcessing || selected === 0;
+                elements.clearButton.disabled = state.isProcessing || selected === 0;
+            }
+
+            function setProcessingState(isProcessing) {
+                state.isProcessing = isProcessing;
+                elements.analyzeButton.disabled = isProcessing || state.files.length === 0;
+                elements.clearButton.disabled = isProcessing || state.files.length === 0;
+                elements.browseButton.disabled = isProcessing;
+                elements.buttonSpinner.classList.toggle("hidden", !isProcessing);
+                elements.browseButton.classList.toggle("opacity-60", isProcessing);
+                elements.browseButton.classList.toggle("cursor-not-allowed", isProcessing);
+                syncCounters();
+            }
+
+            function revokePreviews(items) {
+                items.forEach((item) => {
+                    if (item.previewUrl) {
+                        URL.revokeObjectURL(item.previewUrl);
+                    }
+                });
+            }
+
+            function buildStatusMarkup(item) {
+                if (item.status === "uploading") {
+                    return `
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2 text-sky-200">
+                                <span class="h-2 w-2 animate-pulse rounded-full bg-sky-300"></span>
+                                <span class="text-sm font-medium">Uploading batch...</span>
+                            </div>
+                            <p class="text-xs leading-5 text-slate-400">Sending image to the inference endpoint.</p>
+                        </div>
+                    `;
+                }
+
+                if (item.status === "processing") {
+                    return `
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2 text-cyan-200">
+                                <span class="h-2 w-2 animate-pulse rounded-full bg-cyan-300"></span>
+                                <span class="text-sm font-medium">Running inference...</span>
+                            </div>
+                            <p class="text-xs leading-5 text-slate-400">Model is evaluating authenticity cues.</p>
+                        </div>
+                    `;
+                }
+
+                if (item.status === "error") {
+                    return `
+                        <div class="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-3 py-3 text-sm text-rose-100">
+                            ${escapeHtml(item.error || "Unable to analyze this image.")}
+                        </div>
+                    `;
+                }
+
+                if (item.status === "done" && item.result) {
+                    const meta = RESULT_META[item.result.label] || RESULT_META.FAKE;
+                    const confidence = Number(item.result.confidence || 0);
+                    return `
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.badge}">
+                                    ${escapeHtml(item.result.label)}
+                                </span>
+                                <span class="text-sm font-semibold text-white">${confidence.toFixed(2)}%</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="h-2 overflow-hidden rounded-full bg-white/10">
+                                    <div class="h-full rounded-full bg-gradient-to-r ${meta.bar}" style="width: ${Math.max(6, Math.min(100, confidence))}%"></div>
+                                </div>
+                                <p class="text-xs ${meta.tone}">Confidence score returned by the model.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="space-y-2">
+                        <p class="text-sm font-medium text-white">Queued for analysis</p>
+                        <p class="text-xs leading-5 text-slate-400">This image will be included in the next batch request.</p>
+                    </div>
+                `;
+            }
+
+            function buildCard(item) {
+                const article = document.createElement("article");
+                article.className = "fade-in group relative overflow-hidden rounded-[28px] border border-white/10 card-surface p-3 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-white/20";
+                article.dataset.fileId = item.id;
+
+                const overlayVisible = item.status === "uploading" || item.status === "processing";
+                const statusMarkup = buildStatusMarkup(item);
+
+                article.innerHTML = `
+                    <button
+                        type="button"
+                        class="remove-file absolute right-5 top-5 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-slate-950/65 text-slate-300 transition hover:border-white/20 hover:bg-slate-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        data-file-id="${escapeHtml(item.id)}"
+                        ${state.isProcessing ? "disabled" : ""}
+                        aria-label="Remove ${escapeHtml(item.file.name)}"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M18 6 6 18"></path>
+                            <path d="m6 6 12 12"></path>
+                        </svg>
+                    </button>
+
+                    <div class="relative overflow-hidden rounded-[22px] border border-white/8 bg-slate-950/70">
+                        <div class="aspect-[4/3] overflow-hidden">
+                            <img src="${escapeHtml(item.previewUrl)}" alt="${escapeHtml(item.file.name)}" class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]">
+                        </div>
+                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                        <div class="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/30 to-transparent"></div>
+                        <div class="${overlayVisible ? "" : "hidden "}absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]">
+                            <div class="scan-bar absolute inset-x-5 top-0 h-14 rounded-full bg-gradient-to-b from-sky-300/0 via-sky-300/35 to-sky-300/0 blur-xl"></div>
+                            <div class="absolute inset-x-0 bottom-0 px-4 pb-4 pt-10">
+                                <div class="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-sky-300/20 bg-sky-400/10">
+                                            <svg class="h-4 w-4 animate-spin text-sky-200" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" class="opacity-20"></circle>
+                                                <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path>
+                                            </svg>
+                                        </span>
+                                        <div>
+                                            <p class="text-sm font-semibold text-white">${item.status === "uploading" ? "Uploading image" : "Running inference"}</p>
+                                            <p class="text-xs text-slate-300">${item.status === "uploading" ? "Transferring file to the server" : "Evaluating visual authenticity signals"}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 space-y-3">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-white">${escapeHtml(item.file.name)}</p>
+                            <div class="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                                <span>${formatBytes(item.file.size)}</span>
+                                <span class="h-1 w-1 rounded-full bg-slate-600"></span>
+                                <span>${escapeHtml(item.file.type || "image")}</span>
+                            </div>
+                        </div>
+                        <div class="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+                            <p class="text-[11px] uppercase tracking-[0.24em] text-slate-400">Prediction status</p>
+                            <div class="mt-3">${statusMarkup}</div>
+                        </div>
+                    </div>
+                `;
+
+                return article;
+            }
+
+            function renderCards() {
+                elements.previewGrid.innerHTML = "";
+                const hasFiles = state.files.length > 0;
+                elements.emptyState.classList.toggle("hidden", hasFiles);
+
+                state.files.forEach((item) => {
+                    elements.previewGrid.appendChild(buildCard(item));
+                });
+            }
+
+            function addFiles(fileList) {
+                const incoming = Array.from(fileList || []);
+                if (!incoming.length) {
+                    return;
+                }
+
+                hideServerFallback();
+                clearAlert();
+
+                const existingKeys = new Set(state.files.map((item) => getFileKey(item.file)));
+                const rejected = [];
+                const duplicates = [];
+                const acceptedItems = [];
+
+                incoming.forEach((file) => {
+                    const key = getFileKey(file);
+
+                    if (!isImageFile(file)) {
+                        rejected.push(file.name || "Unnamed file");
+                        return;
+                    }
+
+                    if (existingKeys.has(key)) {
+                        duplicates.push(file.name || "Unnamed file");
+                        return;
+                    }
+
+                    existingKeys.add(key);
+                    acceptedItems.push({
+                        id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+                        file,
+                        previewUrl: URL.createObjectURL(file),
+                        status: "ready",
+                        result: null,
+                        error: null
+                    });
+                });
+
+                if (acceptedItems.length) {
+                    state.files.push(...acceptedItems);
+                    renderCards();
+                    syncCounters();
+                }
+
+                if (rejected.length) {
+                    setAlert(`Skipped ${rejected.length} invalid file${rejected.length === 1 ? "" : "s"}: ${rejected.join(", ")}`, "warning");
+                } else if (duplicates.length) {
+                    setAlert(`Ignored ${duplicates.length} duplicate file${duplicates.length === 1 ? "" : "s"} already in queue.`, "warning");
+                }
+            }
+
+            function removeFile(fileId) {
+                if (state.isProcessing) {
+                    return;
+                }
+
+                const index = state.files.findIndex((item) => item.id === fileId);
+                if (index === -1) {
+                    return;
+                }
+
+                const [removed] = state.files.splice(index, 1);
+                revokePreviews([removed]);
+                renderCards();
+                syncCounters();
+                clearAlert();
+            }
+
+            function clearQueue() {
+                if (state.isProcessing || !state.files.length) {
+                    return;
+                }
+
+                revokePreviews(state.files);
+                state.files = [];
+                elements.fileInput.value = "";
+                renderCards();
+                syncCounters();
+                clearAlert();
+            }
+
+            function prepareBatchForProcessing() {
+                state.files = state.files.map((item) => ({
+                    ...item,
+                    status: "uploading",
+                    result: null,
+                    error: null
+                }));
+                renderCards();
+                syncCounters();
+            }
+
+            function markBatchAsProcessing() {
+                state.files = state.files.map((item) => ({
+                    ...item,
+                    status: item.status === "uploading" ? "processing" : item.status
+                }));
+                renderCards();
+                syncCounters();
+            }
+
+            function applyResults(results) {
+                const unresolvedIndexes = new Set(state.files.map((_, index) => index));
+
+                results.forEach((entry) => {
+                    if (typeof entry.index !== "number" || !state.files[entry.index]) {
+                        return;
+                    }
+
+                    const item = state.files[entry.index];
+                    unresolvedIndexes.delete(entry.index);
+
+                    if (entry.error) {
+                        item.status = "error";
+                        item.error = entry.error;
+                        item.result = null;
+                        return;
+                    }
+
+                    item.status = "done";
+                    item.error = null;
+                    item.result = {
+                        label: String(entry.prediction || "").toUpperCase(),
+                        confidence: Number(entry.confidence || 0)
+                    };
+                });
+
+                unresolvedIndexes.forEach((index) => {
+                    const item = state.files[index];
+                    if (item.status === "uploading" || item.status === "processing") {
+                        item.status = "error";
+                        item.error = "No prediction returned for this image.";
+                        item.result = null;
+                    }
+                });
+            }
+
+            function parseResponse(xhr) {
+                if (xhr.response && typeof xhr.response === "object") {
+                    return xhr.response;
+                }
+
+                try {
+                    return JSON.parse(xhr.responseText);
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            function analyzeBatch(event) {
+                event.preventDefault();
+
+                if (!state.files.length || state.isProcessing) {
+                    return;
+                }
+
+                hideServerFallback();
+                clearAlert();
+                setProcessingState(true);
+                prepareBatchForProcessing();
+                setProgress(6, "Preparing batch upload...");
+
+                const formData = new FormData();
+                state.files.forEach((item) => {
+                    formData.append("images", item.file, item.file.name);
+                });
+
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", elements.uploadForm.action, true);
+                xhr.responseType = "json";
+                xhr.timeout = 180000;
+                xhr.setRequestHeader("Accept", "application/json");
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+                xhr.upload.addEventListener("progress", (progressEvent) => {
+                    if (!progressEvent.lengthComputable) {
+                        return;
+                    }
+
+                    const progress = Math.min(92, Math.round((progressEvent.loaded / progressEvent.total) * 92));
+                    setProgress(progress, progress >= 90 ? "Upload complete. Starting inference..." : "Uploading images...");
+                });
+
+                xhr.upload.addEventListener("loadend", () => {
+                    markBatchAsProcessing();
+                    setProgress(94, "Running model inference...");
+                });
+
+                xhr.addEventListener("load", () => {
+                    const payload = parseResponse(xhr);
+
+                    if (xhr.status >= 200 && xhr.status < 300 && payload) {
+                        applyResults(payload.results || []);
+                        renderCards();
+                        syncCounters();
+                        setProgress(100, "Analysis complete");
+                        window.setTimeout(() => {
+                            if (!state.isProcessing) {
+                                hideProgress();
+                            }
+                        }, 900);
+                        if ((payload.results || []).some((entry) => entry.error)) {
+                            setAlert("Analysis completed with warnings for some files.", "warning");
+                        } else {
+                            clearAlert();
+                        }
+                    } else {
+                        const message = payload?.error || "The server could not process this batch.";
+                        state.files.forEach((item) => {
+                            if (item.status === "uploading" || item.status === "processing") {
+                                item.status = "error";
+                                item.error = message;
+                            }
+                        });
+                        renderCards();
+                        syncCounters();
+                        setAlert(message, "error");
+                        hideProgress();
+                    }
+
+                    setProcessingState(false);
+                });
+
+                xhr.addEventListener("error", () => {
+                    state.files.forEach((item) => {
+                        if (item.status === "uploading" || item.status === "processing") {
+                            item.status = "error";
+                            item.error = "Network error while contacting the server.";
+                        }
+                    });
+                    renderCards();
+                    syncCounters();
+                    setAlert("Network error while contacting the server.", "error");
+                    hideProgress();
+                    setProcessingState(false);
+                });
+
+                xhr.addEventListener("timeout", () => {
+                    state.files.forEach((item) => {
+                        if (item.status === "uploading" || item.status === "processing") {
+                            item.status = "error";
+                            item.error = "Request timed out before inference completed.";
+                        }
+                    });
+                    renderCards();
+                    syncCounters();
+                    setAlert("Request timed out before inference completed.", "error");
+                    hideProgress();
+                    setProcessingState(false);
+                });
+
+                xhr.send(formData);
+            }
+
+            function openFilePicker() {
+                if (!state.isProcessing) {
+                    elements.fileInput.click();
+                }
+            }
+
+            function handleDragState(isActive) {
+                elements.dropzone.classList.toggle("dropzone-active", isActive);
+            }
+
+            elements.fileInput.addEventListener("change", (event) => {
+                addFiles(event.target.files);
+                elements.fileInput.value = "";
+            });
+
+            elements.browseButton.addEventListener("click", openFilePicker);
+            elements.dropzone.addEventListener("click", openFilePicker);
+            elements.dropzone.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openFilePicker();
+                }
+            });
+
+            elements.dropzone.addEventListener("dragenter", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                state.dragDepth += 1;
+                handleDragState(true);
+            });
+
+            elements.dropzone.addEventListener("dragover", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                handleDragState(true);
+            });
+
+            elements.dropzone.addEventListener("dragleave", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                state.dragDepth = Math.max(0, state.dragDepth - 1);
+                if (state.dragDepth === 0) {
+                    handleDragState(false);
+                }
+            });
+
+            elements.dropzone.addEventListener("drop", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                state.dragDepth = 0;
+                handleDragState(false);
+                addFiles(event.dataTransfer.files);
+            });
+
+            elements.clearButton.addEventListener("click", clearQueue);
+            elements.uploadForm.addEventListener("submit", analyzeBatch);
+
+            elements.previewGrid.addEventListener("click", (event) => {
+                const removeButton = event.target.closest(".remove-file");
+                if (!removeButton) {
+                    return;
+                }
+
+                removeFile(removeButton.dataset.fileId);
+            });
+
+            window.addEventListener("beforeunload", () => {
+                revokePreviews(state.files);
+            });
+
+            ["dragover", "drop"].forEach((eventName) => {
+                window.addEventListener(eventName, (event) => {
+                    event.preventDefault();
+                });
+            });
+
+            syncCounters();
+            renderCards();
+        });
+    </script>
+</body>
+</html>

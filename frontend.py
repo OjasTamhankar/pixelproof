@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-st.title("Fake vs Real Image Detector")
+st.title("Synthetic vs Real Image classification")
 
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 
